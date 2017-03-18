@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+
+
+</style>
+</head>
+
+<body> 
+<script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.0/jquery.min.js'></script>
+<script>
+	var htmlDivs = new Array();
+	var Lights = new Array();
+	var on_OffCheck = false;
+
+	function Light(name) {
+		if (name === undefined)
+			Light.serial = Light.serial !== undefined ? ++Light.serial : 0; //public
+		var light_name = name || 'f' + Light.serial; //private
+		var light_number = Light.serial; //private
+
+		htmlDivs[Light.serial] = document.createElement("div");
+		htmlDivs[Light.serial].innerHTML = "This is light \"f " + Light.serial + "\"";
+		htmlDivs[Light.serial].style.color = 'white';
+		htmlDivs[Light.serial].style.backgroundColor = 'hsl(0, 0%, 50%';
+		htmlDivs[Light.serial].style.width = '50%';
+
+		var s = document.getElementById("show");
+		s.appendChild(htmlDivs[Light.serial]);
+
+		var status = false; //private
+
+		function toggleLight() { //private
+			status = !status;
+			if (status === true) {
+				if (light_number % 3 === 0) {
+					htmlDivs[light_number].style.backgroundColor = 'hsl(0, 100%, 50%';
+				} else if (light_number % 3 === 1) {
+					htmlDivs[light_number].style.backgroundColor = 'hsl(120, 100%, 50%';
+				} else {
+					htmlDivs[light_number].style.backgroundColor = 'hsl(240, 100%, 50%';
+				}
+				//$('#light0').css('backgroundColor', 'hsl(122, 100%, 50%');
+				//console.log('on');
+			} else {
+				htmlDivs[light_number].style.backgroundColor = 'hsl(0, 0%, 50%';
+				//$('#light0').css('backgroundColor', 'grey');
+				//console.log('off');
+			}
+		}
+
+		this.check = function() {
+			return status;
+		}
+
+		this.getName = function() {
+			return light_name;
+		}
+
+		var timer;
+		var power = false;
+		this.toggleBlink = function() {
+			power = !power;
+			if (power === true) {
+				timer = setInterval(toggleLight, ((light_number % 3) + 1) * 333);
+			} else {
+				clearInterval(timer);
+			}
+		}
+
+		this.init = function() {
+			status = false;
+			power = false;
+			htmlDivs[light_number].style.backgroundColor = 'hsl(0, 0%, 50%';
+			clearInterval(timer);
+		}
+	}
+
+	function newLight() {
+		Lights.push(new Light());
+	}
+
+	//var l0 = new Light();
+	//var l1 = new Light();
+	/*l0.name = "XX";
+	console.log(l0.getName()+' '+l0.check());*/
+
+	//$('#l0Button').click(l0.toggleBlink());
+
+	/*$('#turnButton').click(function() {
+		on_OffCheck = !on_OffCheck;
+		if(!on_OffCheck) {
+			for (i = 0; i < Lights.length; i++) {
+				Lights[i].init();
+			}
+		} else {
+			for (i = 0; i < Lights.length; i++) {
+				Lights[i].toggleBlink();
+			}
+		}
+	});*/
+
+	function turnButton() {
+		if (Lights.length !== 0) {
+			on_OffCheck = !on_OffCheck;
+		}
+		if (!on_OffCheck) {
+			for (i = 0; i < Lights.length; i++) {
+				Lights[i].init();
+			}
+		} else {
+			for (i = 0; i < Lights.length; i++) {
+				Lights[i].toggleBlink();
+			}
+		}
+	}
+
+</script>
+	<!--<div id='light0' style="background-color:gray;color:yellow">
+		light 0
+	</div>-->
+	<!--<button type="button" id="turnButton">
+			On/Off
+	</button>-->
+	<input type="button" value="On/Off" onclick="turnButton()">&nbsp&nbsp
+	<input type="button" value="newLight" onclick="newLight()">
+	<div id="show"></div>
+</body>
+
+</html>
