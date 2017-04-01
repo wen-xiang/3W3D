@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    color: #ffff00
+}
+
+button {
+    margin: 10px;
+    color: green;
+}
+
+body {
+    overflow: hidden;
+}
+</style>
+</head>
+<body> 
+	<div id="info">3W3D_HW2
+		<br/>
+		<button id='v1'>view1</button>
+		<button id='v2'>view2</button>
+		<button id='v3'>view3</button>
+		<button id='v4'>view4</button>
+	</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+	var camera, scene, renderer, light_1, light_2, controls;
+	var textureIndex = 0;
+	var textures = new Array();
+	var partitions = new Array();
+	var doors = new Array();
+	var paints = new Array();
+	//var partition = new THREE.Object3D();
+
+
+	init();
+	animate();
+
+	function loadTexture(url) {
+
+		// instantiate a loader
+		var loader = new THREE.TextureLoader();
+		loader.setCrossOrigin('');
+
+		// load a resource
+		loader.load(
+			// resource URL
+			url, // 
+			// Function when resource is loaded
+			function(tex) {
+				console.log('texture loaded ...');
+				textures[textureIndex] = tex; // for global access with Keypress
+				textureIndex++;
+			},
+
+			// Function called when download progresses
+			function(xhr) {
+				console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+			},
+			// Function called when download errors
+			function(xhr) {
+				console.log('An error happened');
+			}
+		);
+
+	}
+
+	function init() {
+		
+		scene = new THREE.Scene();
+
+		camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+		camera.position.z = 500;
+		scene.add(camera);
+
+		light_1 = new THREE.PointLight(0xffffff);
+		light_1.position.set(100, 100, 100);
+		scene.add(light_1);
+
+		light_2 = new THREE.PointLight(0xEE8800);
+		light_2.position.set(20, 10, 80);
+		scene.add(light_2);
+
+		var gridXZ = new THREE.GridHelper(240, 24, 'red', 'white');
+		scene.add(gridXZ);
+		// gridXZ.position.set (25,0,25);
+
+		var axes = new THREE.AxisHelper(30);
+		scene.add(axes);
+		renderer = new THREE.WebGLRenderer({
+			antialias: true,
+			precision: "highp",
+			maxLights: 2
+		});
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setClearColor(0x888888);
+
+		controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+		document.body.appendChild(renderer.domElement);
+		////////////////////////////////////////////////////////////////////////
+
+
+		var groundGeometry = new THREE.PlaneGeometry(80, 104);
+		var groundMaterial = new THREE.MeshBasicMaterial({
+			color: 0x444444,
+			side: THREE.DoubleSide,
+			polygonOffset: true,
+			polygonOffsetFactor: 1.0,
+			polygonOffsetUnits: 4.0
+		});
+		var ground = new THREE.Mesh(groundGeometry, groundMaterial);
+		ground.rotation.x = Math.PI / 2;
+		ground.position.set(40, 0, 52);
+		scene.add(ground);
+
+		////frame////
+		var partitionMesh_1 = createPartition(70, 28, 2);
+		partitionMesh_1.position.set(35 + 10, 14, 1);
+
+		var partitionMesh_2 = createPartition(2, 28, 104);
+		partitionMesh_2.position.set(1, 14, 52);
+
+		var partitionMesh_3 = createPartition(2, 28, 104);
+		partitionMesh_3.position.set(80 - 1, 14, 52);
+
+		var partitionMesh_4 = createPartition(80, 28, 2);
+		partitionMesh_4.position.set(40, 14, 104 - 1);
+		////Entrance
+		var partitionMesh_5 = createPartition(24, 28, 2);
+		partitionMesh_5.position.set(12, 14, 12.5);
+		////kitchen¡Bliving room
+		var partitionMesh_6 = createPartition(14, 28, 2);
+		partitionMesh_6.position.set(7, 14, 42.5);
+
+		var partitionMesh_7 = createPartition(26, 28, 2);
+		partitionMesh_7.position.set(22 + 13, 14, 42.5);
+
+		var partitionMesh_8 = createPartition(2, 28, 20);
+		partitionMesh_8.position.set(22 + 1, 14, 22 + 10);
+		////Storage Room¡BToilet 1
+		var partitionMesh_9 = createPartition(48, 28, 2);
+		partitionMesh_9.position.set(24, 14, 72.5);
+
+		var partitionMesh_10 = createPartition(2, 28, 31);
+		partitionMesh_10.position.set(31, 14, 42 + 15.5);
+
+		var partitionMesh_11 = createPartition(2, 28, 12.5);
+		partitionMesh_11.position.set(47, 14, 42 + 6.25);
+
+		var partitionMesh_12 = createPartition(2, 28, 10);
+		partitionMesh_12.position.set(47, 14, 62.5 + 5);
+		/////master bedroom+Toilet 2¡Broom1+2
+		var partitionMesh_13 = createPartition(22, 28, 2);
+		partitionMesh_13.position.set(57 + 11, 14, 28.5);
+
+		var partitionMesh_14 = createPartition(22, 28, 2);
+		partitionMesh_14.position.set(57 + 11, 14, 58.5);
+
+		var partitionMesh_14 = createPartition(22, 28, 2);
+		partitionMesh_14.position.set(57 + 11, 14, 88);
+
+		var partitionMesh_15 = createPartition(2, 28, 22);
+		partitionMesh_15.position.set(57 + 1, 14, 28 + 11);
+
+		var partitionMesh_16 = createPartition(2, 28, 20);
+		partitionMesh_16.position.set(57 + 1, 14, 67 + 10);
+
+		var partitionMesh_17 = createPartition(2, 28, 8.5);
+		partitionMesh_17.position.set(57 + 1, 14, 95 + 4.25);
+
+		var TV = createPartition(14, 14, 2);
+		TV.position.set(42, 18, 2);
+
+		////////////door
+		var doorMesh_1 = createDoor();
+		doorMesh_1.position.set(2 + 4, 14, 1);
+		doorMesh_1 = babaRotation(doorMesh_1, 2, 14, 0);
+
+		var doorMesh_2 = createDoor();
+		//doorMesh_2.position.set(22 + 4, 14, 22);
+		//doorMesh_2.rotation.y = Math.PI / 6;
+		doorMesh_2 = babaRotation(doorMesh_2, 22, 14, 22, 2);
+
+		var doorMesh_3 = createDoor();
+		//doorMesh_3.position.set(14 + 4, 14, 42.5);
+		doorMesh_3 = babaRotation(doorMesh_3, 14, 14, 42.5);
+
+		var doorMesh_4 = createDoor();
+		//doorMesh_4.position.set(47+4, 14, 62.5);
+		doorMesh_4 = babaRotation(doorMesh_4, 47, 14, 62.5, 2);
+
+		var doorMesh_5 = createDoor();
+		//doorMesh_5.position.set(47+4, 14, 62.5);
+		doorMesh_5 = babaRotation(doorMesh_5, 58, 14, 58.5, 2);
+
+		var doorMesh_6 = createDoor();
+		//doorMesh_6.position.set(47+4, 14, 62.5);
+		doorMesh_6 = babaRotation(doorMesh_6, 58, 14, 67, 2);
+
+		var doorMesh_7 = createDoor();
+		//doorMesh_7.position.set(47+4, 14, 62.5);
+		doorMesh_7 = babaRotation(doorMesh_7, 58, 14, 95, 2);
+		///////////////
+		var paintMesh_1 = createPaint(42, 18, 3, 6, 6, 0);
+		var paintMesh_2 = createPaint(2, 18, 88, 0, 6, 6);
+
+		camera.position.set(200, 200, 200);
+		camera.lookAt(new THREE.Vector3(0, 0, 0));
+		loadTexture('http://i.imgur.com/XqJtJON.jpg');
+		loadTexture('http://i.imgur.com/K8bhNsz.jpg');
+		loadTexture('http://i.imgur.com/wY0qhOV.jpg');
+		
+	}
+
+	function createPartition(box_X, box_Y, box_Z) {
+
+		//MeshLambertMaterial
+		var partitionMaterial = new THREE.MeshLambertMaterial({
+			color: 0xFFFFFFF,
+			polygonOffset: true,
+			polygonOffsetFactor: 1.0,
+			polygonOffsetUnits: 4.0
+		});
+		var partitionGeometry = new THREE.BoxGeometry(box_X, box_Y, box_Z);
+		var partitionMesh = new THREE.Mesh(partitionGeometry, partitionMaterial);
+		partitions.push(partitionMesh);
+		scene.add(partitionMesh);
+
+		return partitionMesh;
+
+	}
+
+	function createDoor() {
+		var plane_X = 8,
+			plane_Y = 26;
+		var doorMaterial = new THREE.MeshBasicMaterial({
+			color: 0xCC6600,
+			side: THREE.DoubleSide
+		});
+		var doorGeometry = new THREE.PlaneGeometry(plane_X, plane_Y);
+		var doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+		doors.push(doorMesh);
+		scene.add(doorMesh);
+		/*var baba = new THREE.Object3D();
+		baba.add(doorMesh);
+		scene.add(baba);
+		baba.rotation.y = Math.PI / 6;*/
+
+		return doorMesh;
+
+	}
+
+	function babaRotation(doorMesh, x, y, z, Magnification) {
+		doorMesh.position.set(4, 0, 0);
+
+		var boxMaterial;
+		var boxGeometry;
+		var boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+		boxMesh.position.set(x, y, z);
+
+		var baba = boxMesh; //new THREE.Object3D();
+		//baba.add(boxMesh);
+		baba.add(doorMesh);
+		scene.add(baba);
+		if (Magnification === undefined) {
+			Magnification = 1;
+		}
+		baba.rotation.y = Math.PI / 6 * Magnification;
+
+		return doorMesh;
+	}
+
+	function createPaint(x, y, z, radiusX, radiusY, radiusZ) {
+		var paintGeometry = new THREE.Geometry();
+		/*if(radiusX === undefined) {
+			radiusX=2;
+			radiusY=2;
+			radiusZ=0;
+		}*/
+		paintGeometry.vertices.push(
+			new THREE.Vector3(x - radiusX, y + radiusY, z + radiusZ),
+			new THREE.Vector3(x - radiusX, y - radiusY, z + radiusZ),
+			new THREE.Vector3(x + radiusX, y - radiusY, z - radiusZ),
+			new THREE.Vector3(x + radiusX, y + radiusY, z - radiusZ)
+		);
+
+		var Paint;
+		Paint = new THREE.Face3(0, 1, 2);
+		Paint.materialIndex = 0;
+		paintGeometry.faces.push(Paint);
+		Paint = new THREE.Face3(0, 2, 3);
+		Paint.materialIndex = 0;
+		paintGeometry.faces.push(Paint);
+
+		paintGeometry.faceVertexUvs[0].push([
+			new THREE.Vector2(0, 1),
+			new THREE.Vector2(0, 0),
+			new THREE.Vector2(1, 0)
+		]);
+		paintGeometry.faceVertexUvs[0].push([
+			new THREE.Vector2(0, 1),
+			new THREE.Vector2(1, 0),
+			new THREE.Vector2(1, 1)
+		]);
+
+		paintGeometry.computeBoundingSphere();
+		paintGeometry.computeFaceNormals();
+		paintGeometry.computeVertexNormals();
+
+		var paintMesh = new THREE.Mesh(paintGeometry,
+			new THREE.MeshBasicMaterial({
+				side: THREE.DoubleSide
+			}));
+		scene.add(paintMesh);
+		//paintMesh.position.y = 50;
+		paints.push(paintMesh);
+		return paintMesh;
+	}
+
+	$('#v1').click(
+
+		function() {
+			camera.position.set(150, 150, 150);
+			camera.lookAt(new THREE.Vector3(0, 0, 0));
+		}
+	);
+
+	$('#v2').click(
+
+		function() {
+			camera.position.set(60, 130, 100);
+			camera.lookAt(camera.position.set(60, 130, 100));
+		}
+	);
+
+	$('#v3').click(
+
+		function() {
+			camera.position.set(-100, 100, -100);
+			var lookAtVector = new THREE.Vector3(80, 0, -1);
+			lookAtVector.applyQuaternion(camera.quaternion);
+			//camera.lookAt(new THREE.Vector3(80, 0, 104));
+
+		}
+	);
+
+	$('#v4').click(
+
+		function() {
+			camera.position.set(150, -150, 150);
+			camera.lookAt({ //¬ÛÉó¬Ý¦V­þ?§¤?
+				x: 150,
+				y: 0,
+				z: 0
+			});
+		}
+	);
+
+	function animate() {
+		if (textures[0] !== undefined) {
+			// texture_1 already loaded ...
+			for (i = 0; i < partitions.length; i++) {
+				partitions[i].material.map = textures[0];
+				// tell Three.js that something needs update
+				partitions[i].material.needsUpdate = true;
+			}
+		}
+		if (textures[1] !== undefined) {
+			// texture_1 already loaded ...
+
+			for (i = 0; i < paints.length; i++) {
+				paints[i].material.map = textures[i + 1];
+				// tell Three.js that something needs update
+				paints[i].material.needsUpdate = true;
+			}
+		}
+		controls.update();
+
+		requestAnimationFrame(animate);
+		render();
+	}
+
+	function render() {
+		renderer.render(scene, camera);
+	}
+	// important to add this 
+	// in jsfiddle!
+	window.focus();
+
+</script>
+	
+</body>
+
+</html>
