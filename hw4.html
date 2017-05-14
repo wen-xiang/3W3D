@@ -49,8 +49,14 @@ body {
 		<input type="radio" id="rotation_180_Radio" name="rotationRadio">180度
 		<br>
 		<input type="radio" id="rotation_270_Radio" name="rotationRadio">270度
-		<br>
+		<hr>
+		<button id='clear' style="width:45%">Clear</button>
+		<button id='save' style="width:45%">Save</button>
+		<button id='restore' style="width:45%">Restore</button>
 	</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
@@ -64,6 +70,7 @@ body {
 	var pickplane;
 	var cyl;
 	var width, height;
+	var blankMesh;
 	var sofaObj;
 	var tableObj;
 	var furnitures = new Array();
@@ -72,6 +79,42 @@ body {
 
 	init();
 	animate();
+
+	$('#clear').click(function() {
+
+		furnitures.forEach(function(furniture) {
+			scene.remove(furniture);
+		});
+		console.log(furnitures.length);
+		for (var i = 0; i < furnitures.lengtt; i++) {
+			furnitures[i] = blankMesh;
+		}
+
+	});
+
+	$('#save').click(function() {
+
+		var states = [];
+		furnitures.forEach(function(furniture) {
+			states.push(furniture.name);
+		});
+
+		localStorage.setItem('stateStr', JSON.stringify(states));
+
+	});
+
+	$('#restore').click(function() {
+
+		var states = JSON.parse(localStorage.getItem('stateStr'));
+		states.forEach(function(stateStr) {
+			//console.log(stateStr);
+			if (stateStr != "") {
+				var state = JSON.parse(stateStr);
+				buildObj(state.type, state.angle, new THREE.Vector3(state.pos[0], 0, state.pos[1]));
+			}
+		});
+
+	});
 
 	function objLoader(mesh, tSize, url) {
 
@@ -139,6 +182,7 @@ body {
 			obj = sofaObj;
 			furnitures[0] = obj;
 		} else if (type == "table") {
+			//obj = sofaObj.clone();
 			obj = tableObj;
 			furnitures[1] = obj;;
 		}
@@ -262,17 +306,17 @@ body {
 
 		var boxMaterial;
 		var boxGeometry;
-		var boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
-		sofaObj = boxMesh.clone(); //new THREE.Object3D();
-		objLoader( sofaObj, 5, '/3W3D/load/sofa-1-threejs/sofa-1.json' );
-		
-		tableObj = boxMesh.clone(); //new THREE.Object3D();
-		objLoader( tableObj, 5, '/3W3D/load/table-0001-threejs/table-0001.json' );
+		blankMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+		sofaObj = blankMesh.clone(); //new THREE.Object3D();
+		objLoader(sofaObj, 14, '/3W3D/load/sofa-1-threejs/sofa-1.json');
+
+		tableObj = blankMesh.clone(); //new THREE.Object3D();
+		objLoader(tableObj, 5, '/3W3D/load/table-0001-threejs/table-0001.json');
 
 		angle = rotation_all;
 		$('#outputAngle').val(angle.toFixed(2));
-		furnitures.push(boxMesh.clone());
-		furnitures.push(boxMesh.clone());
+		furnitures.push(blankMesh.clone());
+		furnitures.push(blankMesh.clone());
 
 		window.addEventListener('resize', onWindowResize, false);
 		window.addEventListener('mousemove', onDocumentMouseMove, false);
