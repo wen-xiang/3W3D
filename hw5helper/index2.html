@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<!--change-->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style>
+.dateField {
+  width: 40%
+}
+
+.rec {
+  background: cyan;
+}
+
+input {
+  margin: 3px
+}
+
+#recordPanel {
+  overflow: scroll
+}
+
+</style>
+</head>
+
+<body> 
+<h1> HW5_Sign In/Sign Up+DB </h1>
+<hr>
+<div id='login_option'>
+	Login
+	<input type='text' id='loginID' style="width:20%">
+	<button id='log-in'>log-in</button>
+	<br><br>
+</div>
+<span id='loginReport'></span>
+<br><br>
+<div id='log_DB' style="display:none;width:50%">
+	<button id='start_DB' style='width:100%'>
+	  start
+	</button>
+	<div id='recordPanel' style="height:50vh">
+	</div>
+	<hr>
+	<button id='upload' >Upload(server)</button>
+	<button id='download' >Download</button>
+	<button id='clearData' >Clear(client)</button>
+</div>
+<br><br>
+<div id='result'></div>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+<script>
+
+var loginName;
+var log;
+var logFilename;
+var YYYYMMDD;
+var isFirst = true;
+var recs = [];
+var locationNumber = 0;
+var tagCount = 0;
+
+//setTimeout(myFunction, 2000);
+/*function myFunction() {
+    document.getElementById("dialog").style.visibility = "hidden";
+}
+function signIn() {
+	document.getElementById("upload").style.visibility = "visible";
+}*/
+function padLeft( number, lenght ){
+	if(number >= 10)
+		return number+"";
+	else
+		return "0"+number;
+}
+
+$('#start_DB').click(function() {
+  //startD = new Date();
+  if(isFirst) {
+	isFirst = false;
+	document.getElementById('start_DB').disabled=true;
+	if(tagCount===0)
+		$('#recordPanel').append( "<table width=\"300\" style=\"padding-left: 2vw;\"><tr><td> Time </td><td> location </td></tr></table>");
+	addRecord();
+  }
+});
+
+function addRecord() {
+	var d = new Date();
+	YYYYMMDD = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+	var changeDay = d.getHours();
+	if( changeDay === 0 ) {
+		changeDay = 24;
+	}
+	var showTime = changeDay + padLeft(d.getMinutes(), 2) + padLeft(d.getSeconds(), 2);
+	$('#input').prev().val(showTime);
+	$('#input').val(locationNumber);
+	var rec = {
+		ST: showTime,
+		LOC: locationNumber
+	};
+	console.log(rec);
+	recs.push(rec); 
+	
+	if(tagCount > locationNumber) {
+		document.getElementById(locationNumber).style.display = "inline";
+		document.getElementById(locationNumber).value = showTime;
+		document.getElementById('a'+locationNumber).style.display = "inline";
+		document.getElementById('b'+locationNumber).style.display = "inline";
+		locationNumber++;
+	} else {
+		$('#recordPanel').append( $("<input>", {
+			val: showTime,
+			id: locationNumber
+		}));
+		$('#recordPanel').append( $("<input>", {
+			val: locationNumber,
+			id: 'a' + locationNumber
+		}));
+		//if (isNaN (parseInt ($(this).prev().val()))) return;
+		
+		$('#recordPanel').append($("<button />", {
+			class: 'rec',
+			text: 'next',
+			id: 'b' + locationNumber,
+			click: function() {
+				//console.log (parseInt ($(this).prev().val() ));
+				// allow only meaningful input
+				/*if (isNaN (parseInt ($(this).prev().val()))) return;
+		  
+				var d = new Date();
+				//var elapsed = d.getTime() - startD.getTime();
+				var showTime = YYYYMMDD + "-" + d.getHours() +":" +d.getMinutes()+ " :"+d.getSeconds();
+				$(this).prev().prev().val(showTime);
+				var rec = {
+					ET: showTime,
+					LOC: $(this).prev().val()
+				};
+				console.log(rec);
+				recs.push(rec);*/
+				//$(this).disabled=true;
+				//document.getElementById('locationNumber').focus();
+				//$(this).focus();
+				if( locationNumber!== 0) {
+					/*var tmp = document.getElementById(locationNumber - 1);
+					//console.log(locationNumber);
+					if (tmp) {
+						//tmp.disabled=true;
+						//tmp.scrollTop = tmp.scrollHeight;
+						tmp.scrollIntoView();
+					}*/
+				}
+				addRecord();
+			}
+		}));
+		$('#recordPanel').append("<br>", {
+			id: 'c' + locationNumber,
+		});
+		document.getElementById(locationNumber).scrollIntoView();
+		locationNumber++;
+	}
+	
+	if(locationNumber > tagCount)
+		tagCount++;
+}
+
+
+$('#log-in').click ( function() {
+	
+	loginName = $('#loginID').val();
+	console.log ( 'login name: ' + loginName );
+	
+	$.get( "http://127.0.0.1:1337/login?name="+ $('#loginID').val(), function( data ) {
+		console.log ('after get');
+		console.log ('code: ' + data.status);
+		console.log ('output: ' + data.output);
+	
+		if(data && data.status === 1) {
+			if (data.output === "1") 
+				$('#loginReport').text ( loginName + ', you have been added!' );
+			else
+				$('#loginReport').text ( loginName + ', welcome back!' );
+			
+			var d = new Date();
+			YYYYMMDD = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+			document.getElementById("login_option").style.display = "none";
+			//document.getElementById("upload").style.display = "inline";
+			document.getElementById("log_DB").style.display = "block"; //"block" "inline"
+			//document.getElementById("loginID").style.visibility = "collapse";
+			$("#loginReport").append(" " + YYYYMMDD);
+		}
+	});(null)
+
+});
+
+// IIFE of records
+/*( function() {
+	var records = [];
+	var record1 = {dt: 201, code: 1};
+	var record2 = {dt: 432, code: 2};
+	var record3 = {dt: 310, code: 4};
+	//if(recs)
+	records.push (record1, record2, record3);
+
+	var dd = [];
+	dd.push (new Date().getTime());
+	dd.push (records.length);
+	for (var i = 0; i < records.length; i++) {
+		dd.push (records[i].st);
+		dd.push (records[i].loc);
+	}
+	console.log ('dd: ' + dd);
+	
+	log = jQuery.param ({ data: dd });
+	
+	console.log (log);
+})();*/
+
+$('#upload').click ( function() {
+	var dd = [];
+	dd.push (YYYYMMDD);
+	dd.push (recs.length);
+	for (var i = 0; i < recs.length; i++) {
+		dd.push (recs[i].ST);
+		dd.push (recs[i].LOC);
+	}
+	console.log ('dd: ' + dd);
+	
+	log = jQuery.param ({ data: dd });
+	
+	console.log (log);
+	
+	var d = new Date();
+	//var YYYYMMDD = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+	
+	logFilename = loginName+ "_" + YYYYMMDD + '.log';
+	console.log ('filename:' + logFilename);
+	console.log ('before get:' + log);
+	
+	$.get ("http://127.0.0.1:1337/writelog?filename=" + logFilename + '&'+ log, function ( data ) {
+		
+	});
+});
+
+$('#download').click ( function() {
+
+	console.log ('in download ...');
+	
+	// which one to retrieve?
+	logFilename = loginName+ "_" + YYYYMMDD + '.log';
+	console.log ('filename:' + logFilename);
+	
+	$.get ("http://127.0.0.1:1337/readlog?filename=" + logFilename, function ( data ) {
+		console.log ('dataOut: ' + data.output);
+		
+		var logs = data.output.split (' ');
+		var date = logs[0];
+		
+		var records=[];
+		
+		var n = logs[1];
+		console.log(n);
+		
+		/*for (var i = 0; i < n; i++) {
+			var record = {dt: logs[2+2*i], code: logs[2+2*i+1]};
+			records.push (record);
+		}
+		
+		$('#result').html (logFilename + '<br><br>' + JSON.stringify (records));*/
+		
+		
+		
+		recs = [];
+		clearClient();
+		if( n > 0 ) {
+			isFirst = false;
+			document.getElementById('start_DB').disabled = true;
+			for (var i = 0; i < n; i++) {			
+				var record = {ST: logs[2+2*i], LOC: logs[2+2*i+1]};
+				recs.push (record);
+				
+				if(tagCount===0)
+					$('#recordPanel').append( "<table width=\"300\" style=\"padding-left: 2vw;\"><tr><td> Time </td><td> location </td></tr></table>");
+				if(tagCount > locationNumber) {
+					document.getElementById(locationNumber).style.display = "inline";
+					document.getElementById(locationNumber).value = logs[2+2*i];
+					document.getElementById('a'+locationNumber).style.display = "inline";
+					document.getElementById('b'+locationNumber).style.display = "inline";
+					var tmp = document.getElementById('c'+locationNumber);
+					//console.log(locationNumber);
+					if (tmp) {
+						tmp.style.display = "inline";
+					}
+					//document.getElementById('c'+locationNumber).style.display = "inline";
+					document.getElementById(locationNumber).scrollIntoView();
+					locationNumber++;
+				} else {
+					$('#recordPanel').append( $("<input>", {
+						val: logs[2+2*i],
+						id: locationNumber
+					}));
+					$('#recordPanel').append( $("<input>", {
+						val: locationNumber,
+						id: 'a' + locationNumber
+					}));
+					//if (isNaN (parseInt ($(this).prev().val()))) return;
+					
+					$('#recordPanel').append($("<button />", {
+						class: 'rec',
+						text: 'next',
+						id: 'b' + locationNumber,
+						click: function() {
+							if( locationNumber!== 0) {
+								var tmp = document.getElementById(locationNumber - 1);
+								//console.log(locationNumber);
+								if (tmp) {
+									//tmp.disabled=true;
+									//tmp.scrollTop = tmp.scrollHeight;
+									tmp.scrollIntoView();
+								}
+							}
+							addRecord();
+						}
+					}));
+					$('#recordPanel').append("<br>", {
+						id: 'c' + locationNumber,
+					});
+					document.getElementById(locationNumber).scrollIntoView();
+					locationNumber++;
+				}
+				
+				if(locationNumber > tagCount)
+					tagCount++;
+			}
+			//$('#result').html (logFilename + '<br><br>' + JSON.stringify (recs));
+		}
+	});
+});
+
+$('#clearData').click ( function() {
+	clearClient();
+});
+function clearClient() {
+	console.log ('in clear ...');
+	
+	for(var i = locationNumber-1; i >= 0; i--) {
+		document.getElementById(i).style.display = "none";
+		document.getElementById('a'+i).style.display = "none";
+		document.getElementById('b'+i).style.display = "none";
+		var tmp = document.getElementById(i);
+		//console.log(locationNumber);
+		if (tmp) {
+			tmp.style.display = "none";
+		}
+		//document.getElementById('c'+i).style.display = "none";
+		locationNumber--;
+	}
+	isFirst = true;
+	document.getElementById('start_DB').disabled = false;
+	recs = [];
+}
+</script>
+</body>
+
+</html>
