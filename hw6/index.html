@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<!--change-->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style>
+.dateField {
+  width: 40%
+}
+
+.rec {
+  background: cyan;
+}
+
+input {
+  margin: 3px
+}
+
+#recordPanel {
+  overflow: scroll
+}
+
+#info {
+    position: absolute;
+    top: 2%;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    color: #ffff00
+}
+
+body {
+    overflow: hidden;
+}
+
+#dialog {
+    position: absolute;
+    bottom: 30%;
+    left: -20%;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    color: #00FFFF;
+}
+
+</style>
+</head>
+
+<body> 
+<h1>HW6_people in the living room</h1>
+<hr>
+<div id='login_option'>
+	Login
+	<input type='text' id='loginID' style="width:20%">
+	<button id='log-in'>log-in</button>
+	<br><br>
+</div>
+<span id='loginReport'></span>
+<br><br>
+<div id='log_DB' style="display:none;">
+    <div id="container" style="float:left; background:pink; width:60vw; height:60vh">
+    </div>
+    <div id="gui" style="width:35vw; float:right; height:60vh; background:yellow;">
+        選擇速度:
+        <br>
+        <input type="radio" id="halfSpeed" name="speedChange" value="">x0.5
+		<br>
+        <input type="radio" id="oneSpeed" name="speedChange" value="" checked>x1
+		<br>
+        <input type="radio" id="twoSpeed" name="speedChange" value="">x2
+        <br>
+        <hr>
+		選擇視角:
+        <br>
+        <input type="radio" id="globalView" name="viewChange" value="" checked>global view
+		<br>
+        <input type="radio" id="myView" name="viewChange" value="">第一人稱
+		<br>
+        <hr>
+        <!--<button id="toggle" style="width:50%; ">
+        toggle
+    </button>
+    <br>-->八方位:&nbsp
+		<br>
+        <input type="radio" id="rotation_0_Radio" name="rotationRadio" checked>0度 (右)
+        <br>
+		<input type="radio" id="rotation_45_Radio" name="rotationRadio">45度 (右前)
+        <br>
+        <input type="radio" id="rotation_90_Radio" name="rotationRadio">90度 (正前)
+        <br>
+		<input type="radio" id="rotation_135_Radio" name="rotationRadio">135度 (左前)
+        <br>
+        <input type="radio" id="rotation_180_Radio" name="rotationRadio">180度 (左)
+        <br>
+		<input type="radio" id="rotation_225_Radio" name="rotationRadio">225度 (左後)
+        <br>
+        <input type="radio" id="rotation_270_Radio" name="rotationRadio">270度 (正後)
+		<br>
+		<input type="radio" id="rotation_315_Radio" name="rotationRadio">315度 (右後)
+        <br>
+        <hr>
+        <button id='upload' style="width:45%">Upload(server)</button>
+		<button id='clearData' style="width:45%">Clear(client)</button>
+		<br><br>
+		<hr>
+        Download
+		<br>
+		<select id='fileSelect'></select>
+    </div>
+</div>
+<div id="dialog" style="visibility:hidden;">1234
+</div>
+<!--<div id='log_DB' style="display:none;width:50%">
+	<button id='start_DB' style='width:100%'>
+	  start
+	</button>
+	<div id='recordPanel' style="height:50vh">
+	</div>
+	<hr>
+	<button id='upload' >Upload(server)</button>
+	<button id='download' >Download</button>
+	<button id='clearData' >Clear(client)</button>
+</div>-->
+<br><br>
+<div id='result'></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+<script>
+
+var loginName;
+var log;
+var logFilename;
+var YYYYMMDD;
+//var isFirst = true;
+var recs = [];
+var locationNumber = 0;
+var tagCount = 0;
+//------new-----
+var scene, renderer, camera, controls;
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+var pickplane;
+var cyl;
+var width, height;
+var blankMesh;
+var sofaObj;
+var tableObj;
+var furnitures = new Array();
+var type_name = "sofa";
+var rotation_all = 0;
+var partitions = new Array();
+var doors = new Array();
+var paints = new Array();
+var paints_doc = new Array();
+var spotLights = new Array();
+var spotLight_count = 0;
+var thePerson;
+var files = new Array();
+var fileCount = 0;
+var existNewfile = false;
+var circles = new Array();
+var selectCircle;
+var startTime = new Date().getTime();
+var firstPick = true;
+var orientation = 0;
+var playback = false;
+var speed = 1;
+var personRotation = 0;
+var view = 0;
+
+
+$("#halfSpeed").click( function() {
+    speed = 0.5;
+});
+$("#oneSpeed").click( function() {
+    speed = 1;
+});
+$("#twoSpeed").click( function() {
+    speed = 2;
+});
+
+$("#rotation_0_Radio").click( function() {
+    personRotation = 0;
+});
+$("#rotation_45_Radio").click( function() {
+    personRotation = 1;
+});
+$("#rotation_90_Radio").click( function() {
+    personRotation = 2;
+});
+$("#rotation_135_Radio").click( function() {
+    personRotation = 3;
+});
+$("#rotation_180_Radio").click( function() {
+    personRotation = 4;
+});
+$("#rotation_225_Radio").click( function() {
+    personRotation = 5;
+});
+$("#rotation_270_Radio").click( function() {
+    personRotation = 6;
+});
+$("#rotation_315_Radio").click( function() {
+    personRotation = 7;
+});
+
+$("#globalView").click( function() {
+    view = 0;
+});
+$("#myView").click( function() {
+    view = 1;
+});
+globalView
+
+$('#fileSelect').change( function() {
+	console.log ($(this).val());
+	
+	console.log ('in download ...');
+	
+	
+	$.get ("http://127.0.0.1:1337/readlog?filename=" + $(this).val(), function ( data ) {
+		console.log ('dataOut: ' + data.output);
+		
+		var logs = data.output.split (' ');
+		var date = logs[0];
+		
+		var records=[];
+		
+		var n = logs[1];
+		console.log(n);
+		
+		/*for (var i = 0; i < n; i++) {
+			var record = {dt: logs[2+2*i], code: logs[2+2*i+1]};
+			records.push (record);
+		}
+		
+		$('#result').html (logFilename + '<br><br>' + JSON.stringify (records));*/
+		
+		recs = [];
+		//clearClient();
+		if( n > 0 ) {
+			//isFirst = false;
+			//document.getElementById('start_DB').disabled = true;
+			for (var i = 0; i < n; i++) {			
+				var record = {ST: logs[2+4*i], X: logs[2+4*i+1], Z: logs[2+4*i+2], Or: logs[2+4*i+3]};
+				recs.push (record);
+				
+			}
+			startPlayback();
+			//$('#result').html (logFilename + '<br><br>' + JSON.stringify (recs));
+		}
+	});
+	
+	
+});
+
+function createPartition(box_X, box_Y, box_Z, rotation) {
+
+    //MeshLambertMaterial
+    var partitionMaterial = new THREE.MeshLambertMaterial({
+        color: 0xFFFFFFF,
+        transparent: true,
+        opacity: 0.6
+            /*polygonOffset: true,
+            polygonOffsetFactor: 1.0,
+            polygonOffsetUnits: 4.0*/
+    });
+    var partitionGeometry = new THREE.BoxGeometry(box_X, box_Y, box_Z);
+    var partitionMesh = new THREE.Mesh(partitionGeometry, partitionMaterial);
+    //partitionMesh.receiveShadow = true;
+    partitionMesh.castShadow = true;
+    if (rotation !== undefined) {
+        var rotationStr = new Array();
+        rotationStr = rotation.split(":");
+        if (rotationStr[1] !== undefined && !isNaN(rotationStr[1])) {
+            partitionMesh.rotation.y = (Math.PI / 180 * rotationStr[1]);
+        }
+    }
+
+    partitions.push(partitionMesh);
+    scene.add(partitionMesh);
+
+    return partitionMesh;
+
+}
+
+function createDoor() {
+    var plane_X = 8,
+        plane_Y = 20;
+    var doorMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00DD00,
+        side: THREE.DoubleSide
+    });
+    var doorGeometry = new THREE.PlaneGeometry(plane_X, plane_Y);
+    var doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+    doors.push(doorMesh);
+    scene.add(doorMesh);
+    /*var baba = new THREE.Object3D();
+    baba.add(doorMesh);
+    scene.add(baba);
+    baba.rotation.y = Math.PI / 6;*/
+
+    return doorMesh;
+
+}
+
+function createPaint(x, y, z, radiusX, radiusY, radiusZ) {
+    var paintGeometry = new THREE.Geometry();
+    /*if(radiusX === undefined) {
+        radiusX=2;
+        radiusY=2;
+        radiusZ=0;
+    }*/
+    paintGeometry.vertices.push(
+        new THREE.Vector3(x - radiusX, y + radiusY, z + radiusZ),
+        new THREE.Vector3(x - radiusX, y - radiusY, z + radiusZ),
+        new THREE.Vector3(x + radiusX, y - radiusY, z - radiusZ),
+        new THREE.Vector3(x + radiusX, y + radiusY, z - radiusZ)
+    );
+
+    var Paint;
+    Paint = new THREE.Face3(0, 1, 2);
+    Paint.materialIndex = 0;
+    paintGeometry.faces.push(Paint);
+    Paint = new THREE.Face3(0, 2, 3);
+    Paint.materialIndex = 0;
+    paintGeometry.faces.push(Paint);
+
+    paintGeometry.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 1),
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0)
+    ]);
+    paintGeometry.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 1),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(1, 1)
+    ]);
+
+    paintGeometry.computeBoundingSphere();
+    paintGeometry.computeFaceNormals();
+    paintGeometry.computeVertexNormals();
+
+    var paintMesh = new THREE.Mesh(paintGeometry,
+        new THREE.MeshLambertMaterial({
+            side: THREE.DoubleSide
+        }));
+    scene.add(paintMesh);
+    //paintMesh.position.y = 50;
+    createSpotLight(x, y, z);
+    paints.push(paintMesh);
+
+    return paintMesh;
+}
+
+function createSpotLight(x, y, z) {
+    //console.log('123');
+    var pillarMaterial = new THREE.MeshLambertMaterial({
+        color: 0xFFFFFFF,
+        polygonOffset: true,
+        polygonOffsetFactor: 1.0,
+        polygonOffsetUnits: 4.0
+    });
+    var pillarGeometry = new THREE.CylinderGeometry(0.25, 0.25, 3, 8);
+    var pillarMesh = new THREE.Mesh(pillarGeometry, pillarMaterial);
+    pillarMesh.position.set(x, 20, z);
+    pillarMesh.castShadow = true;
+    scene.add(pillarMesh);
+
+    var testMaterial;
+    var testGeometry;
+    var testMesh = new THREE.Mesh(testGeometry, testMaterial);
+    testMesh.position.set(x, 10, z);
+
+    var spotLight = new THREE.SpotLight(0xffffff);
+    spotLight.intensity = 2;
+    spotLight.distance = 36;
+    spotLight.angle = 1;
+    spotLight.penumbra = 0.7;
+
+    spotLight.castShadow = true;
+    //spotLight.receiveShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    
+    scene.add(testMesh);
+    spotLight.target = testMesh;
+    //spotLight.target = mesh2;
+    spotLight.penumbra = 0.6;
+    scene.add(spotLight);
+
+    spotLights.push(spotLight);
+    //scene.add( spotLight );
+    spotLights[spotLight_count++].position.set(x+10, 20, z);
+    //scene.add(spotLight);
+
+    spotLightHelper = new THREE.SpotLightHelper(spotLight);
+    //scene.add(spotLightHelper);
+}
+
+function createPeople(x, y, z, name) {
+	var boxMaterial;
+    var boxGeometry;
+    var boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    boxMesh.position.set(0, 0, 0);
+    var baba = boxMesh; //new THREE.Object3D();
+	
+	var coneGeometry = new THREE.ConeGeometry( 3, 10, 32 );
+	var coneMaterial = new THREE.MeshBasicMaterial( {color: 0xFFFFFF} );
+	var coneMesh = new THREE.Mesh( coneGeometry, coneMaterial );
+	scene.add( coneMesh );
+    coneMesh.rotation.x = (Math.PI);
+    coneMesh.position.set(x, 5, z);
+    
+    var faceGeometry = new THREE.BoxGeometry( 1, 6, 6 );
+	var faceMaterial = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+	var faceMesh = new THREE.Mesh( faceGeometry, faceMaterial );
+	scene.add( faceMesh );
+    faceMesh.rotation.x = (Math.PI/2);
+    faceMesh.position.set(x, 13, z);
+    z_fighting_solution(faceMesh);
+    
+    if(name != undefined) {
+    	var paint_1 = createPaint(0.5, 13, 0, 0, 3, 3);
+		paints_doc.push(name);
+		//name = "Shun"
+    	loadTexture(paint_1, 'https://wen-xiang.github.io/3W3D/load/face/' + name + '.jpg');
+		baba.add(paint_1);
+    }
+    
+    
+    baba.add(coneMesh);
+    baba.add(faceMesh);
+    scene.add(baba);
+	
+	return baba;
+	
+}
+
+function createCircle( x, y, z, colorHex ) {
+	var circleGeometry = new THREE.CircleGeometry( 5, 32 );
+	var circleMaterial = new THREE.MeshBasicMaterial({ 
+    	color: colorHex,
+        polygonOffset: true,
+        polygonOffsetFactor: 1.0,
+        polygonOffsetUnits: 4.0
+    });
+	var circleMesh = new THREE.Mesh( circleGeometry, circleMaterial );
+    circleMesh.rotation.x = (-Math.PI /2);
+    circleMesh.position.set(x, y+0.1 ,z);
+    circles.push(circleMesh);
+	scene.add( circleMesh );
+}
+
+function babaRotation(doorMesh, x, y, z, Magnification) {
+    doorMesh.position.set(4, 0, 0);
+
+    var boxMaterial;
+    var boxGeometry;
+    var boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    boxMesh.position.set(x, y, z);
+
+    var baba = boxMesh; //new THREE.Object3D();
+    //baba.add(boxMesh);
+    baba.add(doorMesh);
+    scene.add(baba);
+    if (Magnification === undefined) {
+        Magnification = 1;
+    }
+    baba.rotation.y = Math.PI / 6 * Magnification;
+
+    return doorMesh;
+}
+
+function loadTexture(mesh, url) {
+
+    // instantiate a loader
+    var loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('');
+
+    // load a resource
+    loader.load(
+        // resource URL
+        url, // 
+        // Function when resource is loaded
+        function(tex) {
+            console.log('texture loaded ...');
+            if (Array.isArray(mesh) === true) {
+                for (var i = 0; i < mesh.length; i++) {
+                    mesh[i].material.map = tex;
+                    mesh[i].material.needsUpdate = true;
+                }
+            } else {
+                mesh.material.map = tex;
+                mesh.material.needsUpdate = true;
+            }
+        },
+
+        // Function called when download progresses
+        function(xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        // Function called when download errors
+        function(xhr) {
+            console.log('An error happened');
+        }
+    );
+
+}
+
+function objLoader(mesh, tSize, url) {
+
+    var loader = new THREE.ObjectLoader();
+    loader.load(
+        url,
+        function(obj) {
+            obj.scale.set(tSize, tSize, tSize);
+            mesh.add(obj);
+            //baba.add(obj);
+        },
+
+        function(xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+
+        // Function called when download errors
+        function(xhr) {
+            console.error('An error happened');
+        }
+    );
+
+}
+
+function buildObj(type, angle, pos) {
+
+    var obj;
+    if (type == "sofa") {
+        obj = sofaObj;
+        furnitures[0] = obj;
+    } else if (type == "table") {
+        //obj = sofaObj.clone();
+        obj = tableObj;
+        furnitures[1] = obj;;
+    }
+
+    scene.add(obj);
+    var prop = {
+        type: type,
+        angle: angle,
+        pos: [pos.x, pos.z]
+    };
+    console.log(prop);
+    obj.name = JSON.stringify(prop);
+    console.log(obj.name);
+
+    obj.position.copy(pos);
+    obj.rotation.y = (Math.PI / 180 * angle);
+    //sofa.position.set(20, 7.5, 50);
+
+}
+
+function z_fighting_solution(Mesh) {
+    Mesh.material = new THREE.MeshLambertMaterial({
+        color: 0xFFFFFFF,
+        polygonOffset: true,
+        polygonOffsetFactor: 1.0,
+        polygonOffsetUnits: 4.0
+    });
+}
+
+function init() {
+    width = $('#container').innerWidth();
+    height = $('#container').innerHeight();
+    //console.log(width);
+    //console.log('123');
+
+    scene = new THREE.Scene();
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        precision: "highp",
+        //maxLights: 2
+    });
+    renderer.setSize(width, height);
+    renderer.setClearColor(0x888888);
+    //document.body.appendChild(renderer.domElement);
+    $('#container').append(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(50, width / height, 1, 1000);
+    camera.position.set(0, 60, 100);
+    //camera.position.z = 200;
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    //////////////////////light
+    var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(100, 100, 100);
+    scene.add(directionalLight);
+
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.left = -50;
+    directionalLight.shadow.camera.right = 50;
+    directionalLight.shadow.camera.bottom = 50;
+    directionalLight.shadow.camera.top = -50;
+    directionalLight.shadow.camera.far = 200;
+    directionalLight.shadow.bias = -0.02;
+    //////////////////////
+
+    var cyl_geom = new THREE.RingGeometry(2, 4, 32);
+    var cyl_mat = new THREE.MeshBasicMaterial({
+        color: 0xff1234,
+    });
+    cyl = new THREE.Mesh(cyl_geom, cyl_mat);
+    cyl.rotation.x = -Math.PI / 2;
+    cyl.position.set(-20, 0, 20);
+    scene.add(cyl);
+
+    pickplane = new THREE.Mesh(new THREE.PlaneGeometry(100, 100),
+        new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            polygonOffset: true,
+            polygonOffsetFactor: 1.0,
+            polygonOffsetUnits: 4.0
+        }));
+    pickplane.rotation.x = -Math.PI / 2;
+    pickplane.position.set(50, 0, 50);
+    scene.add(pickplane);
+    loadTexture(pickplane, 'http://i.imgur.com/Tvvicxa.jpg')
+        //pickplane.material.visible = false;
+
+    //var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+    //scene.add(gridXZ);
+    controls.target.set(50, 0, 50);
+    camera.position.set(50, 80, 160);
+
+    var partitionMesh_1 = createPartition(31, 20, 2, 'rotate:');
+    partitionMesh_1.position.set(19 + 15.5, 10, 1);
+
+    var partitionMesh_2 = createPartition(35, 20, 2, 'rotate:');
+    partitionMesh_2.position.set(59 + 17.5, 10, 1);
+
+    var partitionMesh_3 = createPartition(48, 20, 2, 'rotate:90');
+    partitionMesh_3.position.set(19 + 1, 10, 24 + 1);
+
+    var partitionMesh_4 = createPartition(31, 20, 2, 'rotate:');
+    partitionMesh_4.position.set(19 + 15.5, 10, 19 + 1);
+
+    var partitionMesh_5 = createPartition(8, 20, 2, 'rotate:');
+    partitionMesh_5.position.set(19 + 4, 10, 48 + 1);
+
+    var partitionMesh_6 = createPartition(8, 20, 2, 'rotate:');
+    partitionMesh_6.position.set(42 + 4, 10, 48 + 1);
+
+    var partitionMesh_7 = createPartition(16, 20, 0.5, 'rotate:');
+    partitionMesh_7.position.set(27 + 8, 10, 48 + 1);
+    partitionMesh_7.material.color.setHex(0xFF00FF);
+
+    var partitionMesh_8 = createPartition(12, 20, 2, 'rotate:90');
+    partitionMesh_8.position.set(49 + 1, 10, 6);
+
+    var doorMesh_1 = createDoor();
+    doorMesh_1.position.set(49 + 1, 10, 12);
+    doorMesh_1 = babaRotation(doorMesh_1, 49 + 1, 10, 12, 11);
+
+    var partitionMesh_9 = createPartition(10, 20, 2, 'rotate:90');
+    partitionMesh_9.position.set(49 + 1, 10, 20 + 4);
+
+    var partitionMesh_10 = createPartition(14, 20, 2, 'rotate:90');
+    partitionMesh_10.position.set(49 + 1, 10, 37 + 7 + 1);
+
+    var doorMesh_2 = createDoor();
+    doorMesh_2.position.set(49 + 1, 10, 30);
+    doorMesh_2 = babaRotation(doorMesh_2, 49 + 1, 10, 29, 7);
+
+    var partitionMesh_11 = createPartition(20, 20, 2, 'rotate:');
+    partitionMesh_11.position.set(1 + 10, 10, 30);
+
+    var partitionMesh_12 = createPartition(30, 20, 2, 'rotate:90');
+    partitionMesh_12.position.set(2, 10, 29 + 15);
+
+    var partitionMesh_13 = createPartition(20, 20, 2, 'rotate:');
+    partitionMesh_13.position.set(1 + 10, 10, 30 + 30);
+
+    var doorMesh_3 = createDoor();
+    doorMesh_3.position.set(20, 10, 59);
+    doorMesh_3 = babaRotation(doorMesh_3, 20, 10, 59, 5);
+
+    var partitionMesh_14 = createPartition(28, 12, 1, 'rotate:90');
+    partitionMesh_14.position.set(19 + 1, 6, 60 + 14 + 0.5);
+
+    var partitionMesh_15 = createPartition(56, 12, 1, 'rotate:');
+    partitionMesh_15.position.set(21 + 26 + 0.5, 6, 88 + 0.5);
+
+    var partitionMesh_16 = createPartition(25, 12, 1, 'rotate:90');
+    partitionMesh_16.position.set(19 + 1 + 56, 6, 63 + 12.5 + 1);
+
+    var partitionMesh_17 = createPartition(3, 20, 3, 'rotate:');
+    partitionMesh_17.position.set(49 + 1, 10, 63);
+
+    var doorMesh_4 = createDoor();
+    doorMesh_4.position.set(50, 10, 52);
+    doorMesh_4 = babaRotation(doorMesh_4, 50, 10, 52, 7.5);
+
+    var partitionMesh_18 = createPartition(20.5, 20, 0.5, 'rotate:');
+    partitionMesh_18.position.set(51 + 10.75, 10, 63 + 1);
+    partitionMesh_18.material.color.setHex(0xFF00FF);
+
+    var partitionMesh_19 = createPartition(22, 20, 2, 'rotate:');
+    partitionMesh_19.position.set(72 + 11, 10, 63);
+
+    var partitionMesh_20 = createPartition(62, 20, 2, 'rotate:90');
+    partitionMesh_20.position.set(92 + 1, 10, 1 + 31);
+
+    var partitionMesh_21 = createPartition(8, 20, 2, 'rotate:');
+    partitionMesh_21.position.set(85 + 4, 10, 27.5);
+	
+	var partitionMesh_22 = createPartition(17.6, 9.9, 0.4, 'rotate:90');
+    partitionMesh_22.position.set(21+0.2, 10, 34 );
+    
+    z_fighting_solution(partitionMesh_22);
+    var paint_1 = createPaint(21+0.2+0.2, 10, 34, 0, 4.5, 8);
+    loadTexture(paint_1, 'http://i.imgur.com/h69zQxC.jpg');
+    paints_doc.push("復仇者聯盟第一集");
+	
+	
+	thePerson = createPeople(0,0,0, loginName);
+	thePerson.position.set(35, 0, 15 );
+
+	createCircle( 35, 0, 15, 0xFF00FF ); 
+    //1 ->Pink
+    createCircle( 75, 0, 15, 0xFFFF00 );
+    //2 ->yellow
+    createCircle( 35, 0, 35, 0xFF0000 );
+    //3 ->red
+    createCircle( 75, 0, 50, 0x888888 );
+    //4 ->gray
+    createCircle( 8, 0, 55, 0x0000FF );
+	//5 ->blue
+    createCircle( 35, 0, 55, 0x00FF00 );
+	//6 ->green
+    createCircle( 35, 0, 75, 0x00FFFF );
+	//7 ->blue-green
+	
+	//peopleControl(35, 0, 55, 6);
+	
+	var circleGeometry = new THREE.CircleGeometry( 7, 32 );
+	var circleMaterial = new THREE.MeshBasicMaterial({ 
+    	color: 0xffffff,
+        polygonOffset: true,
+        polygonOffsetFactor: 1.0,
+        polygonOffsetUnits: 4.0
+    });
+	var circleMesh = new THREE.Mesh( circleGeometry, circleMaterial );
+    circleMesh.rotation.x = (-Math.PI /2);
+    selectCircle = circleMesh;
+    /*var doorMesh_1 = createDoor();
+    doorMesh_1.position.set(2 + 4, 14, 1);
+    doorMesh_1 = babaRotation(doorMesh_1, 2, 14, 0);*/
+
+    /*var geometry = new THREE.BoxGeometry(100, 20, 20);
+    var material = new THREE.MeshLambertMaterial({
+        //wireframe: true
+        color: 0xffffff
+    });
+
+    mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);*/
+
+    var boxMaterial;
+    var boxGeometry;
+    blankMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    sofaObj = blankMesh.clone(); //new THREE.Object3D();
+    objLoader(sofaObj, 12, 'https://wen-xiang.github.io/3W3D/load/sofa-1-threejs/sofa-1.json');
+	//objLoader(sofaObj, 12, 'C:\\Users\\shun\\Desktop\\hw5helper\\load\\sofa-1-threejs\\sofa-1.json');
+
+    tableObj = blankMesh.clone(); //new THREE.Object3D();
+    objLoader(tableObj, 3.75, 'https://wen-xiang.github.io/3W3D/load/table-0001-threejs/table-0001.json');
+	//objLoader(tableObj, 3.75, 'C:\\Users\\shun\\Desktop\\hw5helper\\load\\table-0001-threejs\\table-0001.json');
+
+    angle = rotation_all;
+    $('#outputAngle').val(angle.toFixed(2));
+    furnitures.push(blankMesh.clone());
+    furnitures.push(blankMesh.clone());
+	
+	buildObj("sofa", 90, new THREE.Vector3(87, 0, 50));
+	buildObj("table", 90, new THREE.Vector3(75, 0, 50));
+
+    window.addEventListener('resize', onWindowResize, false);
+    window.addEventListener('mousemove', onDocumentMouseMove, false);
+    window.addEventListener('mousedown', onDocumentMouseDown, false);
+}
+
+function onWindowResize() {
+    width = $('#container').innerWidth();
+    height = $('#container').innerHeight();
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+}
+
+function onDocumentMouseMove(event) {
+
+    event.preventDefault();
+
+    var viewportPos = $('#container').get(0).getBoundingClientRect();
+    mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+    mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObject(pickplane);
+    if (intersects.length > 0) {
+        cyl.position.copy(intersects[0].point);
+        cyl.position.y = 2.5;
+    }
+}
+
+function onDocumentMouseDown(event) {
+
+    //event.preventDefault();
+    if (event.button === 0) { // left button
+        raycaster.setFromCamera(mouse, camera);
+        // calculate objects intersecting the picking ray
+        var intersects = raycaster.intersectObjects(paints);
+        //console.log(intersects.length);
+        if (intersects[0] !== undefined) {
+            for (var i = 0; i < paints.length; i++) {
+                if (paints[i] === intersects[0].object) {
+                    console.log(paints_doc[i]);
+                    //intersects[0].object.material.color.set(0xff0000);
+                    document.getElementById("dialog").innerHTML = paints_doc[i];
+                    document.getElementById("dialog").style.visibility = "visible";
+                    setTimeout(myFunction, 2000);
+                }
+            }
+        }
+    }
+    if (event.button === 2) { //right button
+        var viewportPos = $('#container').get(0).getBoundingClientRect();
+        mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+        mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(circles);
+        //if (intersects.length > 0) {
+        if (intersects[0] !== undefined) {
+        	for (var i = 0; i < circles.length; i++) {
+            	if(circles[i] === intersects[0].object) {
+                	//console.log('77777:' + intersects[0].point.x);
+                    //console.log('77777:' + circles[i].position.x);
+					selectCircle.position.set(circles[i].position.x
+                    , circles[i].position.y-0.08 
+                    , circles[i].position.z);
+                    scene.add( selectCircle );
+            		cyl.position.copy(circles[i].position);
+					var d = new Date();
+					var changeDay = d.getHours();
+					if( changeDay === 0 ) {
+						changeDay = 24;
+					}
+					//.getMilliseconds()
+					var showTime = 0;
+					//var showTime = changeDay + padLeft(d.getMinutes(), 2) + padLeft(d.getSeconds(), 2) + padLeft(d.getMilliseconds(), 3);
+					if (firstPick) {
+						firstPick = false;
+						startTime = new Date().getTime();
+					} else {
+						showTime = new Date().getTime() - startTime;
+					}
+
+					//var showTime = changeDay + padLeft(d.getMinutes(), 2) + padLeft(d.getSeconds(), 2);
+					/*$('#input').prev().val(showTime);
+					$('#input').val(locationNumber);*/
+					var rec = {
+						ST: showTime,//circles[i].position.x,//showTime,
+						X: circles[i].position.x,
+						Z: circles[i].position.z,
+						Or: personRotation
+					};
+					console.log(rec);
+					recs.push(rec);
+                }
+            }
+        }
+    }
+}
+//showTime = new Date().getTime() - startTime;
+function startPlayback () {
+	if (recs.length === 0) {
+		console.log("9999999999999999999");
+		return;
+	}
+	
+		
+	startTime = new Date().getTime();
+	playback = true;
+    
+	/*for (var i = 0; i < logs.length; i++) {
+		//ti.push (recs[i].dt);
+		//xyi.push (recs[i].x]);
+	}*/
+	//isMoving = true;
+	//move.material.visible = true;
+	//moveStart = new Date().getTime();
+  
+}
+
+function peopleControl(x, y, z, rotation) {
+	thePerson.position.set(x, y, z);
+	if(rotation !== undefined)
+		thePerson.rotation.y = (Math.PI / 6) * rotation;
+}
+
+var pointA = [];
+var pointB = [];
+var count = 0;
+
+//controls.target.set(50, 0, 50);
+//camera.position.set(50, 80, 160);
+
+function animate() {
+	if(playback === true) {
+		if(recs.length < 2) {
+			playback = false;
+			peopleControl(recs[0].X, 0, recs[0].Z, recs[0].Or)
+			firstPick = true;
+			//console.log(recs[0].X);
+			//console.log(recs[0].Z);
+		}
+			
+		var showTime = (new Date().getTime() - startTime) * speed;    //*0.5  *1  *2
+		pointA[0] = recs[count];
+		pointB[0] = recs[count+1];
+		if(pointA[0] !== undefined && pointB[0] !== undefined) {
+			var positionX;
+			var positionZ;
+			var moveX;
+			var proportion;
+			if(showTime >= pointB[0].ST) {
+				count++;
+				showTime = pointB[0].ST;
+			}
+			proportion = (showTime - pointA[0].ST)/ (pointB[0].ST - pointA[0].ST);
+			positionX = pointB[0].X*proportion + pointA[0].X*(1-proportion);
+			positionZ = pointB[0].Z*proportion + pointA[0].Z*(1-proportion);
+			peopleControl(positionX, 0, positionZ, pointA[0].Or);
+			var targe = OrientationSwitch(pointB[0].Or);
+			if(view == 1) {
+				controls.target.set( positionX + targe.x, 16, positionZ + targe.z );
+				camera.position.set( positionX, 16, positionZ );
+			}else {
+				controls.target.set(50, 0, 50);
+				camera.position.set(50, 80, 160);
+			}
+		}else {
+			peopleControl(pointA[0].X, 0, pointA[0].Z, pointA[0].Or);
+			playback = false;
+			firstPick = true;
+			count = 0;
+			pointA = [];
+			pointB = [];
+		}
+		
+	}
+    controls.update();
+    
+
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+function OrientationSwitch (Orientation) {
+	var x = 40;
+	var z = 40;
+	switch(Orientation) {
+		case 1:
+			x = x;
+			z = -z;
+			break;
+		case 2:
+			x = 0;
+			z = -z;
+			break;
+		case 3:
+			x = -x;
+			z = -z;
+			break;
+		case 4:
+			x = -x;
+			z = 0;
+			break;
+		case 5:
+			x = -x;
+			z = z;
+			break;
+		case 6:
+			x = 0;
+			z = z;
+			break;
+		case 7:
+			x = x;
+			z = z;
+			break;
+		case 8:
+			x = x;
+			z = 0;
+			break;
+		default:
+			x = x;
+			z = 0;
+	}
+	var obj = {
+		x: x,
+		z: z,
+	};
+	return obj;
+}
+
+function myFunction() {
+    document.getElementById("dialog").style.visibility = "hidden";
+}
+
+function padLeft( number, length ){
+	if(number >= 10)
+		return number+"";
+	else
+		return "0"+number;
+}
+
+
+$('#log-in').click ( function() {
+
+	loginName = $('#loginID').val();
+	console.log ( 'login name: ' + loginName );
+	
+	$.get( "http://127.0.0.1:1337/login?name="+ $('#loginID').val(), function( data ) {
+		console.log ('after get');
+		console.log ('code: ' + data.status);
+		console.log ('output: ' + data.output);
+	
+		if(data && data.status === 1) {
+			if (data.output === "1") 
+				$('#loginReport').text ( loginName + ', you have been added!' );
+			else
+				$('#loginReport').text ( loginName + ', welcome back!' );
+			
+			var d = new Date();
+			YYYYMMDD = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+			document.getElementById("login_option").style.display = "none";
+			//document.getElementById("upload").style.display = "inline";
+			document.getElementById("log_DB").style.display = "block"; //"block" "inline"
+			//document.getElementById("loginID").style.visibility = "collapse";
+			$("#loginReport").append(" " + YYYYMMDD);
+		}
+	});(null)
+	
+	$.get( "http://127.0.0.1:1337/getFileName?name="+ $('#loginID').val(), function( data ) {
+		console.log ('after get '+$('#loginID').val()+'\'s files');
+		console.log(data.status);
+	
+		if(data.status > 0) {
+			//console.log("999999: ");
+			//if (data.output === "Y") 
+			console.log("have : "+ data.status);
+		}
+		var tmpFiles = data.output.split ('\n');
+		fileCount = data.status;
+		files = new Array();
+		for (var i = 0; i < data.status; i++) {
+			files[i] = tmpFiles[data.status -1- i];
+		}
+	
+		for (var i = 0; i < data.status; i++) {
+			$('#fileSelect').append ( "<option value=" + files[i] + ">" + files[i] + "</option>" );
+		}
+	});(null)
+	
+	init();
+	animate();
+
+});
+
+$('#upload').click ( function() {
+	var dd = [];
+	dd.push (YYYYMMDD);
+	dd.push (recs.length);
+	for (var i = 0; i < recs.length; i++) {
+		dd.push (recs[i].ST);
+		dd.push (recs[i].X);
+		dd.push (recs[i].Z);
+		dd.push (recs[i].Or);
+	}
+	console.log ('dd: ' + dd);
+	
+	log = jQuery.param ({ data: dd });
+	
+	console.log (log);
+	
+	var d = new Date();
+	//var YYYYMMDD = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+	
+	logFilename = loginName+ "_" + YYYYMMDD + '.log';
+	console.log ('filename:' + logFilename);
+	console.log ('before get:' + log);
+	
+	//document.getElementById('fileSelect').style.display = "none";
+	//document.getElementById('fileSelect').remove();
+	var node = document.getElementById('fileSelect');
+	while (node.hasChildNodes()) {
+		node.removeChild(node.firstChild);
+	}
+	//if(!existNewfile) {
+		$.get ("http://127.0.0.1:1337/writelog?filename=" + logFilename + '&'+ log, function ( data ) {
+			if(!existNewfile) {
+				for(var j=fileCount; j > 0; j--) {
+					files[j] = files[j-1];
+				}
+				files[0] = logFilename;
+				fileCount++;
+				existNewfile = !existNewfile;
+			}
+			for(var i=0; i < fileCount; i++) {
+				$('#fileSelect').append ( "<option value=" + files[i] + ">" + files[i] + "</option>" );
+			}
+			//document.getElementById('fileSelect').style.display = "inline";
+		});
+	//}
+	
+});
+
+$('#clearData').click ( function() {
+	clearClient();
+});
+function clearClient() {
+	console.log ('in clear ...');
+	
+	//isFirst = true;
+	//document.getElementById('start_DB').disabled = false;
+	recs = [];
+	firstPick = true;
+	//recs.push("1");
+	//console.log(recs.length);
+}
+
+
+</script>
+</body>
+
+</html>
