@@ -3,9 +3,9 @@
 </br>
 HW1: _Github primer_
 </br>
-> HW2: floor plan model
+> HW2: floor plan model<
 <br>
-HW3: _art gallery design_
+> HW3: _art gallery design_
 <br>
 HW4: _local storage_
 <br>
