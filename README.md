@@ -1,9 +1,9 @@
 # 3W3D
 Three.JS HomeWork
 <br>
->HW1: > _Github primer_
+>HW1: _Github primer_
 <br>
-> HW2: _floor plan model_
+>HW2: _floor plan model_
 <br>
 HW3: _art gallery design_
 <br>
