@@ -2,7 +2,6 @@
 ====
 **[Three.JS HomeWork](https://wen-xiang.github.io/3W3D/)**
 ------- 
-</br>
 HW1: **_Github primer_**
 </br>
 HW2: **_floor plan model_**
