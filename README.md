@@ -1,6 +1,6 @@
 # 3W3D
 ##Three.JS HomeWork
-####HW1: _Github primer_
+####HW1: >_Github primer_
 ####Hw2: _floor plan model_
 ####Hw3: _art gallery design_
 ####Hw4: _local storage_
