@@ -1,9 +1,9 @@
-# 3W3D
+3W3D
 ====
 **[Three.JS HomeWork](https://wen-xiang.github.io/3W3D/)**
 ------- 
 </br>
-####HW1: _Github primer_
+HW1: _Github primer_
 </br>
 HW2: _floor plan model_
 <br>
